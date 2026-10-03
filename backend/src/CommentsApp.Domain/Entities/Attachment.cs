@@ -8,7 +8,7 @@ public enum AttachmentType
 
 public class Attachment
 {
-    private Attachment() { } // для EF
+    private Attachment() { }
 
     public Attachment(AttachmentType type, string originalFileName, string storedFileName, long sizeBytes)
     {

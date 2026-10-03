@@ -32,15 +32,13 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Restrict обязателен: в SQL Server каскадное удаление
-            // по самоссылке приводит к ошибке "multiple cascade paths"
             e.HasOne(x => x.Parent)
                 .WithMany(x => x.Replies)
                 .HasForeignKey(x => x.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             e.HasIndex(x => x.ParentId);
-            e.HasIndex(x => x.CreatedAt); // сортировка корневых комментариев по дате
+            e.HasIndex(x => x.CreatedAt);
         });
 
         modelBuilder.Entity<Attachment>(e =>

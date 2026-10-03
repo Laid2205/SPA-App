@@ -2,7 +2,7 @@ namespace CommentsApp.Domain.Entities;
 
 public class User
 {
-    private User() { } // для EF
+    private User() { }
 
     public User(string userName, string email, string? homePage)
     {
