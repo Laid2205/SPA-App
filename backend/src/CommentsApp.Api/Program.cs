@@ -16,6 +16,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<ICommentService, CommentService>();
 
+builder.Services.AddSingleton<IMessageSanitizer, MessageSanitizer>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

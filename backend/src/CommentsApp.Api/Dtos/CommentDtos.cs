@@ -8,10 +8,13 @@ public class CreateCommentRequest
         ErrorMessage = "User Name may contain only latin letters and digits.")]
     public string UserName { get; set; } = null!;
 
-    [Required, EmailAddress, StringLength(254)]
+    [Required, StringLength(254), EmailAddress,
+ RegularExpression(@"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$",
+     ErrorMessage = "Invalid e-mail format.")]
     public string Email { get; set; } = null!;
 
-    [Url, StringLength(2048)]
+    [StringLength(2048), Url,
+     RegularExpression(@"^https?://.+", ErrorMessage = "Home page must start with http:// or https://")]
     public string? HomePage { get; set; }
 
     [Required, StringLength(5000)]
