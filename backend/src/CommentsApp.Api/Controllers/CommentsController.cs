@@ -10,11 +10,14 @@ public class CommentsController : ControllerBase
 {
     private readonly ICommentService _service;
     private readonly IMessageSanitizer _sanitizer;
+    private readonly ICaptchaService _captcha;
 
-    public CommentsController(ICommentService service, IMessageSanitizer sanitizer)
+    public CommentsController(
+        ICommentService service, IMessageSanitizer sanitizer, ICaptchaService captcha)
     {
         _service = service;
         _sanitizer = sanitizer;
+        _captcha = captcha;
     }
 
     [HttpGet]
@@ -24,7 +27,7 @@ public class CommentsController : ControllerBase
 
     [HttpPost]
     public async Task<ActionResult<CommentDto>> Create(
-    CreateCommentRequest request, CancellationToken ct)
+        CreateCommentRequest request, CancellationToken ct)
     {
         var sanitized = _sanitizer.Sanitize(request.Text);
         if (!sanitized.IsValid)
@@ -36,6 +39,12 @@ public class CommentsController : ControllerBase
         if (sanitized.Html.Length > 5000)
         {
             ModelState.AddModelError(nameof(request.Text), "Text is too long.");
+            return ValidationProblem(ModelState);
+        }
+
+        if (!_captcha.Validate(request.CaptchaId, request.CaptchaAnswer))
+        {
+            ModelState.AddModelError(nameof(request.CaptchaAnswer), "Invalid or expired CAPTCHA.");
             return ValidationProblem(ModelState);
         }
 

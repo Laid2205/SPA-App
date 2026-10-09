@@ -18,6 +18,9 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 
 builder.Services.AddSingleton<IMessageSanitizer, MessageSanitizer>();
 
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ICaptchaService, CaptchaService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

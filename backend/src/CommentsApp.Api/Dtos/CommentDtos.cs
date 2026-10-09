@@ -14,13 +14,21 @@ public class CreateCommentRequest
     public string Email { get; set; } = null!;
 
     [StringLength(2048), Url,
-     RegularExpression(@"^https?://.+", ErrorMessage = "Home page must start with http:// or https://")]
+ RegularExpression(@"^https?://[^\s<>""'`]+$",
+     ErrorMessage = "Home page must be a valid http:// or https:// URL without spaces or quotes.")]
     public string? HomePage { get; set; }
 
     [Required, StringLength(5000)]
     public string Text { get; set; } = null!;
 
     public int? ParentId { get; set; }
+
+    [Required, StringLength(32)]
+    public string CaptchaId { get; set; } = null!;
+
+    [Required, StringLength(8), RegularExpression("^[a-zA-Z0-9]+$",
+        ErrorMessage = "CAPTCHA may contain only latin letters and digits.")]
+    public string CaptchaAnswer { get; set; } = null!;
 }
 
 public class CommentDto
