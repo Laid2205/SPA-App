@@ -4,4 +4,7 @@
     <Project Path="src/CommentsApp.Domain/CommentsApp.Domain.csproj" />
     <Project Path="src/CommentsApp.Infrastructure/CommentsApp.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CommentsApp.Tests/CommentsApp.Tests.csproj" />
+  </Folder>
 </Solution>
