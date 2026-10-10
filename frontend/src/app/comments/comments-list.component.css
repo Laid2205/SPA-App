@@ -1,0 +1,89 @@
+.comments {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font-family: system-ui, sans-serif;
+  color: #1f2430;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e3e5ea;
+  transition: opacity 0.15s;
+}
+
+  table.loading {
+    opacity: 0.5;
+  }
+
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #eceef2;
+}
+
+thead th {
+  background: #f5f5f7;
+}
+
+th button {
+  all: unset;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+  th button:hover,
+  th button:focus-visible {
+    color: #3a54d6;
+  }
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.text {
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  text-align: center;
+  color: #7a7f8c;
+  padding: 32px;
+}
+
+.error {
+  color: #a32d2d;
+  background: #fcebeb;
+  padding: 10px 12px;
+  border-radius: 4px;
+}
+
+.pager {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+  .pager button {
+    min-width: 36px;
+    padding: 6px 10px;
+    border: 1px solid #d0d3db;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+    .pager button.active {
+      background: #3a54d6;
+      border-color: #3a54d6;
+      color: #fff;
+    }
+
+    .pager button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
