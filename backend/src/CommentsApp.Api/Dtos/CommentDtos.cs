@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using CommentsApp.Domain.Entities;
 
 namespace CommentsApp.Api.Dtos;
 
@@ -29,6 +31,8 @@ public class CreateCommentRequest
     [Required, StringLength(8), RegularExpression("^[a-zA-Z0-9]+$",
         ErrorMessage = "CAPTCHA may contain only latin letters and digits.")]
     public string CaptchaAnswer { get; set; } = null!;
+
+    public IFormFile? File { get; set; }
 }
 
 public class CommentDto
@@ -41,6 +45,7 @@ public class CommentDto
     public string Text { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public List<CommentDto> Replies { get; set; } = new();
+    public AttachmentDto? Attachment { get; set; }
 }
 
 public class CommentQuery
@@ -57,4 +62,14 @@ public class PagedResult<T>
     public int PageSize { get; set; }
     public int TotalCount { get; set; }
     public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+}
+
+public class AttachmentDto
+{
+    public int Id { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public AttachmentType Type { get; set; }
+
+    public string FileName { get; set; } = null!;
 }

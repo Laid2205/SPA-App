@@ -22,7 +22,13 @@ public class CommentService : ICommentService
         Email = c.User.Email,
         HomePage = c.User.HomePage,
         Text = c.Text,
-        CreatedAt = c.CreatedAt
+        CreatedAt = c.CreatedAt,
+        Attachment = c.Attachment == null ? null : new AttachmentDto
+        {
+            Id = c.Attachment.Id,
+            Type = c.Attachment.Type,
+            FileName = c.Attachment.OriginalFileName
+        }
     };
 
     public async Task<PagedResult<CommentDto>> GetPageAsync(CommentQuery query, CancellationToken ct)
@@ -59,7 +65,6 @@ public class CommentService : ICommentService
         };
     }
 
-    // Загружаем ответы уровень за уровнем: один запрос на каждый уровень вложенности.
     private async Task LoadRepliesAsync(List<CommentDto> roots, CancellationToken ct)
     {
         var byId = roots.ToDictionary(c => c.Id);
@@ -84,7 +89,7 @@ public class CommentService : ICommentService
     }
 
     public async Task<CommentDto?> CreateAsync(
-        CreateCommentRequest request, string ip, string userAgent, CancellationToken ct)
+        CreateCommentRequest request, string ip, string userAgent, Attachment? attachment, CancellationToken ct)
     {
         Comment? parent = null;
         if (request.ParentId is not null)
@@ -93,7 +98,6 @@ public class CommentService : ICommentService
             if (parent is null) return null;
         }
 
-        // Один человек (имя + e-mail) = одна запись в Users, а не новая на каждый комментарий.
         var user = await _db.Users.FirstOrDefaultAsync(
             u => u.UserName == request.UserName && u.Email == request.Email, ct);
 
@@ -109,6 +113,10 @@ public class CommentService : ICommentService
 
         var ua = userAgent.Length > 512 ? userAgent[..512] : userAgent;
         var comment = new Comment(user, request.Text, ip, ua, parent);
+
+        if (attachment is not null)
+            comment.AttachFile(attachment);
+
         _db.Comments.Add(comment);
 
         await _db.SaveChangesAsync(ct);
@@ -121,7 +129,13 @@ public class CommentService : ICommentService
             Email = user.Email,
             HomePage = user.HomePage,
             Text = comment.Text,
-            CreatedAt = comment.CreatedAt
+            CreatedAt = comment.CreatedAt,
+            Attachment = comment.Attachment is null ? null : new AttachmentDto
+            {
+                Id = comment.Attachment.Id,
+                Type = comment.Attachment.Type,
+                FileName = comment.Attachment.OriginalFileName
+            }
         };
     }
 }

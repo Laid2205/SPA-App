@@ -21,6 +21,8 @@ builder.Services.AddSingleton<IMessageSanitizer, MessageSanitizer>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ICaptchaService, CaptchaService>();
 
+builder.Services.AddScoped<IAttachmentService, AttachmentService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

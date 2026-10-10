@@ -1,5 +1,6 @@
 using CommentsApp.Api.Dtos;
 using CommentsApp.Api.Services;
+using CommentsApp.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CommentsApp.Api.Controllers;
@@ -11,13 +12,18 @@ public class CommentsController : ControllerBase
     private readonly ICommentService _service;
     private readonly IMessageSanitizer _sanitizer;
     private readonly ICaptchaService _captcha;
+    private readonly IAttachmentService _attachments;
 
     public CommentsController(
-        ICommentService service, IMessageSanitizer sanitizer, ICaptchaService captcha)
+        ICommentService service,
+        IMessageSanitizer sanitizer,
+        ICaptchaService captcha,
+        IAttachmentService attachments)
     {
         _service = service;
         _sanitizer = sanitizer;
         _captcha = captcha;
+        _attachments = attachments;
     }
 
     [HttpGet]
@@ -26,8 +32,10 @@ public class CommentsController : ControllerBase
         => Ok(await _service.GetPageAsync(query, ct));
 
     [HttpPost]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(6 * 1024 * 1024)]
     public async Task<ActionResult<CommentDto>> Create(
-        CreateCommentRequest request, CancellationToken ct)
+        [FromForm] CreateCommentRequest request, CancellationToken ct)
     {
         var sanitized = _sanitizer.Sanitize(request.Text);
         if (!sanitized.IsValid)
@@ -42,6 +50,18 @@ public class CommentsController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
+        PreparedFile? prepared = null;
+        if (request.File is not null)
+        {
+            var result = await _attachments.PrepareAsync(request.File, ct);
+            if (result.File is null)
+            {
+                ModelState.AddModelError(nameof(request.File), result.Error!);
+                return ValidationProblem(ModelState);
+            }
+            prepared = result.File;
+        }
+
         if (!_captcha.Validate(request.CaptchaId, request.CaptchaAnswer))
         {
             ModelState.AddModelError(nameof(request.CaptchaAnswer), "Invalid or expired CAPTCHA.");
@@ -50,13 +70,28 @@ public class CommentsController : ControllerBase
 
         request.Text = sanitized.Html;
 
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var userAgent = Request.Headers.UserAgent.ToString();
+        Attachment? attachment = null;
+        if (prepared is not null)
+            attachment = await _attachments.SaveAsync(prepared, ct);
 
-        var created = await _service.CreateAsync(request, ip, userAgent, ct);
-        if (created is null)
-            return NotFound(new { error = "Parent comment not found." });
+        try
+        {
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var userAgent = Request.Headers.UserAgent.ToString();
 
-        return StatusCode(StatusCodes.Status201Created, created);
+            var created = await _service.CreateAsync(request, ip, userAgent, attachment, ct);
+            if (created is null)
+            {
+                if (attachment is not null) _attachments.Delete(attachment);
+                return NotFound(new { error = "Parent comment not found." });
+            }
+
+            return StatusCode(StatusCodes.Status201Created, created);
+        }
+        catch
+        {
+            if (attachment is not null) _attachments.Delete(attachment);
+            throw;
+        }
     }
 }
