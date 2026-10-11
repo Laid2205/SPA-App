@@ -1,0 +1,133 @@
+.form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e3e5ea;
+  border-radius: 6px;
+  font-family: system-ui, sans-serif;
+  color: #1f2430;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
+  label span {
+    font-weight: 600;
+  }
+
+input[type='text'],
+input[type='email'],
+input[type='url'],
+textarea {
+  padding: 8px 10px;
+  border: 1px solid #d0d3db;
+  border-radius: 4px;
+  font: inherit;
+}
+
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #3a54d6;
+    outline-offset: 1px;
+  }
+
+textarea {
+  resize: vertical;
+}
+
+.err {
+  color: #a32d2d;
+}
+
+.form-error {
+  margin: 0;
+  padding: 8px 12px;
+  color: #a32d2d;
+  background: #fcebeb;
+  border-radius: 4px;
+}
+
+.file {
+  display: grid;
+  gap: 4px;
+}
+
+.captcha {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.captcha-image {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+  .captcha-image img,
+  .captcha-placeholder {
+    width: 160px;
+    height: 60px;
+    border: 1px solid #d0d3db;
+    border-radius: 4px;
+  }
+
+.captcha-placeholder {
+  display: grid;
+  place-items: center;
+  color: #7a7f8c;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  padding: 8px 16px;
+  border: 1px solid #d0d3db;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+}
+
+  button.primary {
+    background: #3a54d6;
+    border-color: #3a54d6;
+    color: #fff;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  button.link {
+    all: unset;
+    cursor: pointer;
+    color: #3a54d6;
+    font-size: 13px;
+  }
+
+    button.link:hover,
+    button.link:focus-visible {
+      text-decoration: underline;
+    }
+
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

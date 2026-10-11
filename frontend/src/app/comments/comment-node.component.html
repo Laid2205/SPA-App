@@ -1,0 +1,38 @@
+<article class="node" [class.nested]="showHeader()">
+  @if (showHeader()) {
+  <header>
+    @if (comment().homePage) {
+    <a class="name" [href]="comment().homePage" target="_blank" rel="noopener noreferrer nofollow">{{ comment().userName }}</a>
+    } @else {
+    <span class="name">{{ comment().userName }}</span>
+    }
+    <time>{{ comment().createdAt | date: 'dd.MM.yy в HH:mm' }}</time>
+  </header>
+  }
+
+  <div class="text" [innerHTML]="comment().text"></div>
+
+  @if (comment().attachment; as attachment) {
+  <div class="attachment">
+    @if (attachment.type === 'Image') {
+    <img [src]="'/api/attachments/' + attachment.id" [alt]="attachment.fileName" />
+    } @else {
+    <a [href]="'/api/attachments/' + attachment.id" target="_blank" rel="noopener">{{ attachment.fileName }}</a>
+    }
+  </div>
+  }
+
+  <button type="button" class="reply" (click)="replying.set(!replying())">
+    {{ replying() ? 'Отмена' : 'Ответить' }}
+  </button>
+
+  @if (replying()) {
+  <app-comment-form [parentId]="comment().id"
+                    (created)="replying.set(false)"
+                    (cancelled)="replying.set(false)" />
+  }
+
+  @for (reply of comment().replies; track reply.id) {
+  <app-comment-node [comment]="reply" />
+  }
+</article>

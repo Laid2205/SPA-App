@@ -33,3 +33,19 @@ export interface CommentQuery {
   sortBy: SortField;
   desc: boolean;
 }
+
+export interface CaptchaChallenge {
+  id: string;
+  image: string;
+}
+
+export interface CreateCommentPayload {
+  userName: string;
+  email: string;
+  homePage: string;
+  text: string;
+  parentId: number | null;
+  captchaId: string;
+  captchaAnswer: string;
+  file: File | null;
+}

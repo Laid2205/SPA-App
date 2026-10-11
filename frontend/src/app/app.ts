@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommentsListComponent } from './comments/comments-list.component';
+import { CommentFormComponent } from './comments/comment-form.component';
 
 @Component({
   selector: 'app-root',

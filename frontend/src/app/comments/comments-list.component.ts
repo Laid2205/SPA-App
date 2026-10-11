@@ -1,17 +1,20 @@
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommentDto, PagedResult, SortField } from '../models/comment.models';
 import { CommentsApiService } from '../services/comments-api.service';
+import { CommentNodeComponent } from './comment-node.component';
 
 @Component({
   selector: 'app-comments-list',
-  imports: [DatePipe],
+  imports: [DatePipe, CommentNodeComponent],
   templateUrl: './comments-list.component.html',
   styleUrl: './comments-list.component.css'
 })
 export class CommentsListComponent implements OnInit, OnDestroy {
   private readonly api = inject(CommentsApiService);
+  private readonly destroyRef = inject(DestroyRef);
   private subscription?: Subscription;
 
   readonly data = signal<PagedResult<CommentDto> | null>(null);
@@ -31,6 +34,8 @@ export class CommentsListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
+
+    this.api.changed$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
 
   ngOnDestroy(): void {

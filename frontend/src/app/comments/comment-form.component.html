@@ -1,0 +1,68 @@
+<form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  @if (formError()) {
+  <p class="form-error" role="alert">{{ formError() }}</p>
+  }
+
+  <div class="row">
+    <label>
+      <span>User Name *</span>
+      <input type="text" formControlName="userName" autocomplete="nickname" />
+      @if (error('userName')) { <small class="err">{{ error('userName') }}</small> }
+    </label>
+
+    <label>
+      <span>E-mail *</span>
+      <input type="email" formControlName="email" autocomplete="email" />
+      @if (error('email')) { <small class="err">{{ error('email') }}</small> }
+    </label>
+  </div>
+
+  <label>
+    <span>Home page</span>
+    <input type="url" formControlName="homePage" placeholder="https://" />
+    @if (error('homePage')) { <small class="err">{{ error('homePage') }}</small> }
+  </label>
+
+  <label>
+    <span>Text *</span>
+    <textarea formControlName="text" rows="4"></textarea>
+    @if (error('text')) { <small class="err">{{ error('text') }}</small> }
+  </label>
+
+  <div class="file">
+    <label>
+      <span>Файл (JPG, GIF, PNG до 320×240 или TXT до 100 КБ)</span>
+      <input #fileInput type="file" accept=".jpg,.jpeg,.png,.gif,.txt" (change)="onFileChange($event)" />
+    </label>
+    @if (file()) {
+    <button type="button" class="link" (click)="clearFile()">Убрать файл</button>
+    }
+    @if (fileError()) { <small class="err">{{ fileError() }}</small> }
+  </div>
+
+  <div class="captcha">
+    <div class="captcha-image">
+      @if (captcha()) {
+      <img [src]="captcha()!.image" width="160" height="60" alt="CAPTCHA" />
+      } @else {
+      <div class="captcha-placeholder">…</div>
+      }
+      <button type="button" class="link" (click)="loadCaptcha()">Обновить</button>
+    </div>
+
+    <label>
+      <span>CAPTCHA *</span>
+      <input type="text" formControlName="captchaAnswer" autocomplete="off" maxlength="8" />
+      @if (error('captchaAnswer')) { <small class="err">{{ error('captchaAnswer') }}</small> }
+    </label>
+  </div>
+
+  <div class="actions">
+    <button type="submit" class="primary" [disabled]="submitting()">
+      {{ submitting() ? 'Отправка…' : 'Отправить' }}
+    </button>
+    @if (parentId() !== null) {
+    <button type="button" (click)="cancelled.emit()">Отмена</button>
+    }
+  </div>
+</form>
