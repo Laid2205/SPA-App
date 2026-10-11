@@ -13,5 +13,6 @@ public class CaptchaController : ControllerBase
 
     [HttpGet]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public ActionResult<CaptchaChallenge> Get() => Ok(_captcha.Create());
+    public async Task<ActionResult<CaptchaChallenge>> Get(CancellationToken ct)
+        => Ok(await _captcha.CreateAsync(ct));
 }

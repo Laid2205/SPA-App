@@ -1,4 +1,5 @@
 using CommentsApp.Api.Dtos;
+using CommentsApp.Api.Events;
 using CommentsApp.Api.Services;
 using CommentsApp.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -13,17 +14,20 @@ public class CommentsController : ControllerBase
     private readonly IMessageSanitizer _sanitizer;
     private readonly ICaptchaService _captcha;
     private readonly IAttachmentService _attachments;
+    private readonly IEventPublisher _events;
 
     public CommentsController(
         ICommentService service,
         IMessageSanitizer sanitizer,
         ICaptchaService captcha,
-        IAttachmentService attachments)
+        IAttachmentService attachments,
+        IEventPublisher events)
     {
         _service = service;
         _sanitizer = sanitizer;
         _captcha = captcha;
         _attachments = attachments;
+        _events = events;
     }
 
     [HttpGet]
@@ -75,7 +79,7 @@ public class CommentsController : ControllerBase
             prepared = result.File;
         }
 
-        if (!_captcha.Validate(request.CaptchaId, request.CaptchaAnswer))
+        if (!await _captcha.ValidateAsync(request.CaptchaId, request.CaptchaAnswer, ct))
         {
             ModelState.AddModelError(nameof(request.CaptchaAnswer), "Invalid or expired CAPTCHA.");
             return ValidationProblem(ModelState);
@@ -87,24 +91,30 @@ public class CommentsController : ControllerBase
         if (prepared is not null)
             attachment = await _attachments.SaveAsync(prepared, ct);
 
+        CommentDto? created;
         try
         {
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             var userAgent = Request.Headers.UserAgent.ToString();
 
-            var created = await _service.CreateAsync(request, ip, userAgent, attachment, ct);
-            if (created is null)
-            {
-                if (attachment is not null) _attachments.Delete(attachment);
-                return NotFound(new { error = "Parent comment not found." });
-            }
-
-            return StatusCode(StatusCodes.Status201Created, created);
+            created = await _service.CreateAsync(request, ip, userAgent, attachment, ct);
         }
         catch
         {
             if (attachment is not null) _attachments.Delete(attachment);
             throw;
         }
+
+        if (created is null)
+        {
+            if (attachment is not null) _attachments.Delete(attachment);
+            return NotFound(new { error = "Parent comment not found." });
+        }
+
+        await _events.PublishAsync(
+            new CommentCreated(created.Id, created.ParentId, created.UserName, created.Email, created.CreatedAt),
+            CancellationToken.None);
+
+        return StatusCode(StatusCodes.Status201Created, created);
     }
 }

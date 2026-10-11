@@ -5,6 +5,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace CommentsApp.Api.Services;
 
@@ -18,11 +19,16 @@ public class CaptchaService : ICaptchaService
 
     private static readonly Lazy<FontFamily> Family = new(ResolveFontFamily);
 
-    private readonly IMemoryCache _cache;
+    private static readonly DistributedCacheEntryOptions CacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = Ttl
+    };
 
-    public CaptchaService(IMemoryCache cache) => _cache = cache;
+    private readonly IDistributedCache _cache;
 
-    public CaptchaChallenge Create()
+    public CaptchaService(IDistributedCache cache) => _cache = cache;
+
+    public async Task<CaptchaChallenge> CreateAsync(CancellationToken ct)
     {
         var chars = new char[CodeLength];
         for (var i = 0; i < chars.Length; i++)
@@ -31,19 +37,20 @@ public class CaptchaService : ICaptchaService
         var code = new string(chars);
         var id = Guid.NewGuid().ToString("N");
 
-        _cache.Set(Key(id), code, Ttl);
+        await _cache.SetStringAsync(Key(id), code, CacheOptions, ct);
 
         var image = "data:image/png;base64," + Convert.ToBase64String(Render(code));
         return new CaptchaChallenge(id, image);
     }
 
-    public bool Validate(string id, string answer)
+    public async Task<bool> ValidateAsync(string id, string answer, CancellationToken ct)
     {
         var key = Key(id);
-        if (!_cache.TryGetValue(key, out string? code) || code is null)
+        var code = await _cache.GetStringAsync(key, ct);
+        if (code is null)
             return false;
 
-        _cache.Remove(key);
+        await _cache.RemoveAsync(key, CancellationToken.None);
 
         return string.Equals(code, answer.Trim(), StringComparison.OrdinalIgnoreCase);
     }
