@@ -31,6 +31,19 @@ public class CommentsController : ControllerBase
         [FromQuery] CommentQuery query, CancellationToken ct)
         => Ok(await _service.GetPageAsync(query, ct));
 
+    [HttpPost("preview")]
+    public ActionResult<PreviewResponse> Preview(PreviewRequest request)
+    {
+        var sanitized = _sanitizer.Sanitize(request.Text);
+        if (!sanitized.IsValid)
+        {
+            ModelState.AddModelError(nameof(request.Text), sanitized.Error!);
+            return ValidationProblem(ModelState);
+        }
+
+        return Ok(new PreviewResponse { Html = sanitized.Html });
+    }
+
     [HttpPost]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(6 * 1024 * 1024)]

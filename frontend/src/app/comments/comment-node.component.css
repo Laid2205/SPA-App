@@ -30,7 +30,30 @@ time {
 
 .text {
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
+
+.thumb {
+  all: unset;
+  display: inline-block;
+  cursor: zoom-in;
+}
+
+  .thumb img {
+    display: block;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .thumb:hover img,
+  .thumb:focus-visible img {
+    transform: scale(1.03);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .thumb:focus-visible {
+    outline: 2px solid #3a54d6;
+    outline-offset: 2px;
+  }
 
 .attachment {
   margin-top: 8px;
@@ -60,3 +83,14 @@ app-comment-form {
   display: block;
   margin-top: 8px;
 }
+
+.ext {
+  margin-left: 6px;
+  text-decoration: none;
+  color: #7a7f8c;
+}
+
+  .ext:hover,
+  .ext:focus-visible {
+    color: #3a54d6;
+  }

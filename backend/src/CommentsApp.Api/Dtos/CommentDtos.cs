@@ -73,3 +73,14 @@ public class AttachmentDto
 
     public string FileName { get; set; } = null!;
 }
+
+public class PreviewRequest
+{
+    [Required, StringLength(5000)]
+    public string Text { get; set; } = null!;
+}
+
+public class PreviewResponse
+{
+    public string Html { get; set; } = null!;
+}

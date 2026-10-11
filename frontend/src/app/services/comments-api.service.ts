@@ -28,6 +28,10 @@ export class CommentsApiService {
     return this.http.get<CaptchaChallenge>('/api/captcha');
   }
 
+  preview(text: string): Observable<{ html: string }> {
+    return this.http.post<{ html: string }>('/api/comments/preview', { text });
+  }
+
   create(payload: CreateCommentPayload): Observable<CommentDto> {
     const body = new FormData();
     body.append('userName', payload.userName);

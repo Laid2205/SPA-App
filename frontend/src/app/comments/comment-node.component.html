@@ -15,9 +15,18 @@
   @if (comment().attachment; as attachment) {
   <div class="attachment">
     @if (attachment.type === 'Image') {
-    <img [src]="'/api/attachments/' + attachment.id" [alt]="attachment.fileName" />
+    <a class="thumb" [href]="'/api/attachments/' + attachment.id" target="_blank" rel="noopener"
+       [attr.aria-label]="'Открыть изображение ' + attachment.fileName"
+       (click)="openImage($event, attachment)">
+      <img [src]="'/api/attachments/' + attachment.id" [alt]="attachment.fileName" />
+    </a>
+    <a class="ext" [href]="'/api/attachments/' + attachment.id" target="_blank" rel="noopener"
+       title="Открыть в новой вкладке" aria-label="Открыть изображение в новой вкладке">↗</a>
     } @else {
-    <a [href]="'/api/attachments/' + attachment.id" target="_blank" rel="noopener">{{ attachment.fileName }}</a>
+    <a [href]="'/api/attachments/' + attachment.id" target="_blank" rel="noopener"
+       (click)="openText($event, attachment)">{{ attachment.fileName }}</a>
+    <a class="ext" [href]="'/api/attachments/' + attachment.id" target="_blank" rel="noopener"
+       title="Открыть в новой вкладке" aria-label="Открыть файл в новой вкладке">↗</a>
     }
   </div>
   }

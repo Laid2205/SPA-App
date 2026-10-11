@@ -23,11 +23,34 @@
     @if (error('homePage')) { <small class="err">{{ error('homePage') }}</small> }
   </label>
 
-  <label>
-    <span>Text *</span>
-    <textarea formControlName="text" rows="4"></textarea>
+  <div class="text-field">
+    <div class="toolbar-row">
+      <span class="title">Text *</span>
+      <div class="toolbar" role="toolbar" aria-label="Теги форматирования">
+        <button type="button" title="Курсив" (click)="insertTag('i')">[i]</button>
+        <button type="button" title="Жирный" (click)="insertTag('strong')">[strong]</button>
+        <button type="button" title="Код" (click)="insertTag('code')">[code]</button>
+        <button type="button" title="Ссылка" (click)="insertTag('a')">[a]</button>
+      </div>
+    </div>
+
+    <textarea #textArea formControlName="text" rows="4" aria-label="Text"></textarea>
+    <small class="hint">Разрешены теги: a (href, title), code, i, strong. Теги нужно закрывать.</small>
     @if (error('text')) { <small class="err">{{ error('text') }}</small> }
-  </label>
+  </div>
+
+  @if (previewOpen()) {
+  <div class="preview" [class.loading]="previewLoading()" aria-live="polite">
+    <div class="preview-title">Предпросмотр</div>
+    @if (preview()?.error) {
+    <p class="err">{{ preview()!.error }}</p>
+    } @else if (preview()?.html) {
+    <div class="preview-body" [innerHTML]="preview()!.html"></div>
+    } @else {
+    <p class="muted">Введите текст, чтобы увидеть предпросмотр.</p>
+    }
+  </div>
+  }
 
   <div class="file">
     <label>
@@ -60,6 +83,9 @@
   <div class="actions">
     <button type="submit" class="primary" [disabled]="submitting()">
       {{ submitting() ? 'Отправка…' : 'Отправить' }}
+    </button>
+    <button type="button" (click)="togglePreview()">
+      {{ previewOpen() ? 'Скрыть предпросмотр' : 'Предпросмотр' }}
     </button>
     @if (parentId() !== null) {
     <button type="button" (click)="cancelled.emit()">Отмена</button>

@@ -1,10 +1,27 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable, Subject, catchError, debounceTime, filter, map, of, switchMap, tap } from 'rxjs';
 import { CaptchaChallenge } from '../models/comment.models';
 import { CommentsApiService } from '../services/comments-api.service';
 
 type FieldName = 'userName' | 'email' | 'homePage' | 'text' | 'captchaAnswer';
+type FormatTag = 'i' | 'strong' | 'code' | 'a';
+interface PreviewState {
+  html: string | null;
+  error: string | null;
+}
 
 const LATIN_DIGITS = /^[a-zA-Z0-9]+$/;
 const EMAIL = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/;
@@ -37,13 +54,14 @@ const SERVER_FIELDS: Record<string, FieldName | 'file'> = {
 export class CommentFormComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly api = inject(CommentsApiService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  /** null = новый корневой комментарий, число = ответ на комментарий с этим id */
   readonly parentId = input<number | null>(null);
   readonly created = output<void>();
   readonly cancelled = output<void>();
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+  private readonly textArea = viewChild<ElementRef<HTMLTextAreaElement>>('textArea');
 
   readonly form = this.fb.group({
     userName: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(LATIN_DIGITS)]],
@@ -59,8 +77,33 @@ export class CommentFormComponent implements OnInit {
   readonly formError = signal<string | null>(null);
   readonly submitting = signal(false);
 
+  readonly previewOpen = signal(false);
+  readonly previewLoading = signal(false);
+  readonly preview = signal<PreviewState | null>(null);
+
+  private readonly previewRequests$ = new Subject<string>();
+
   ngOnInit(): void {
     this.loadCaptcha();
+
+    this.previewRequests$
+      .pipe(
+        switchMap(text => this.requestPreview(text)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(state => {
+        this.preview.set(state);
+        this.previewLoading.set(false);
+      });
+
+    this.form.controls.text.valueChanges
+      .pipe(
+        filter(() => this.previewOpen()),
+        tap(() => this.previewLoading.set(true)),
+        debounceTime(400),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(text => this.previewRequests$.next(text));
   }
 
   loadCaptcha(): void {
@@ -84,6 +127,41 @@ export class CommentFormComponent implements OnInit {
     if (errors['maxlength']) return `Не более ${errors['maxlength'].requiredLength} символов`;
     if (errors['pattern']) return PATTERN_MESSAGES[name];
     return 'Некорректное значение';
+  }
+
+  insertTag(tag: FormatTag): void {
+    const area = this.textArea()?.nativeElement;
+    if (!area) return;
+
+    const start = area.selectionStart;
+    const end = area.selectionEnd;
+    const selected = area.value.slice(start, end);
+
+    const open = tag === 'a' ? '<a href="https://" title="">' : `<${tag}>`;
+    const close = `</${tag}>`;
+
+    area.setRangeText(open + selected + close, start, end, 'end');
+    area.focus();
+
+    if (tag === 'a') {
+      const hrefStart = start + '<a href="'.length;
+      area.setSelectionRange(hrefStart, hrefStart + 'https://'.length);
+    } else if (!selected) {
+      const caret = start + open.length;
+      area.setSelectionRange(caret, caret);
+    }
+
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  togglePreview(): void {
+    const open = !this.previewOpen();
+    this.previewOpen.set(open);
+
+    if (open) {
+      this.previewLoading.set(true);
+      this.previewRequests$.next(this.form.controls.text.value);
+    }
   }
 
   onFileChange(event: Event): void {
@@ -137,6 +215,8 @@ export class CommentFormComponent implements OnInit {
       })
       .subscribe({
         next: () => {
+          this.previewOpen.set(false);
+          this.preview.set(null);
           this.form.controls.text.reset();
           this.clearFile();
           this.loadCaptcha();
@@ -149,6 +229,25 @@ export class CommentFormComponent implements OnInit {
           this.submitting.set(false);
         }
       });
+  }
+
+  private requestPreview(text: string): Observable<PreviewState> {
+    if (!text.trim()) return of({ html: '', error: null });
+
+    return this.api.preview(text).pipe(
+      map(result => ({ html: result.html, error: null })),
+      catchError((err: HttpErrorResponse) => of({ html: null, error: this.previewError(err) }))
+    );
+  }
+
+  private previewError(err: HttpErrorResponse): string {
+    const errors: Record<string, string[]> | undefined = err.error?.errors;
+
+    if (err.status === 400 && errors) {
+      const entry = Object.entries(errors).find(([key]) => key.toLowerCase() === 'text');
+      if (entry) return entry[1].join(' ');
+    }
+    return 'Не удалось получить предпросмотр.';
   }
 
   private rejectFile(message: string): void {

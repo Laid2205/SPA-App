@@ -1,14 +1,11 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { CommentsListComponent } from './comments/comments-list.component';
+import { Component } from '@angular/core';
 import { CommentFormComponent } from './comments/comment-form.component';
+import { CommentsListComponent } from './comments/comments-list.component';
+import { LightboxComponent } from './comments/lightbox.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommentsListComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  imports: [CommentFormComponent, CommentsListComponent, LightboxComponent],
+  templateUrl: './app.html'
 })
-export class App {
-  protected readonly title = signal('frontend');
-}
+export class App { }
