@@ -4,6 +4,7 @@ using CommentsApp.Api.Services;
 using CommentsApp.Api.Caching;
 using CommentsApp.Api.Events;
 using CommentsApp.Api.Notifications;
+using CommentsApp.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,12 @@ builder.Services.AddScoped<IEventPublisher, EventPublisher>();
 builder.Services.AddScoped<IEventHandler<CommentCreated>, InvalidateCommentsCacheHandler>();
 builder.Services.AddScoped<IEventHandler<CommentCreated>, EnqueueReplyNotificationHandler>();
 
+builder.Services.AddScoped<IEventHandler<CommentCreated>, InvalidateCommentsCacheHandler>();
+builder.Services.AddScoped<IEventHandler<CommentCreated>, EnqueueReplyNotificationHandler>();
+builder.Services.AddScoped<IEventHandler<CommentCreated>, BroadcastCommentCreatedHandler>();
+
+builder.Services.AddSignalR(options => options.MaximumReceiveMessageSize = 1024);
+
 builder.Services.AddSingleton<INotificationQueue, NotificationQueue>();
 builder.Services.AddSingleton<INotificationSender, LoggingNotificationSender>();
 builder.Services.AddHostedService<NotificationWorker>();
@@ -72,5 +79,7 @@ app.UseCors("frontend");
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<CommentsHub>("/hubs/comments");
 
 app.Run();

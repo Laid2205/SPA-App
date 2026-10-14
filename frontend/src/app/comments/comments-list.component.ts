@@ -1,9 +1,10 @@
+import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { CommentDto, PagedResult, SortField } from '../models/comment.models';
 import { CommentsApiService } from '../services/comments-api.service';
+import { RealtimeService } from '../services/realtime.service';
 import { CommentNodeComponent } from './comment-node.component';
 
 @Component({
@@ -14,12 +15,15 @@ import { CommentNodeComponent } from './comment-node.component';
 })
 export class CommentsListComponent implements OnInit, OnDestroy {
   private readonly api = inject(CommentsApiService);
+  private readonly realtime = inject(RealtimeService);
   private readonly destroyRef = inject(DestroyRef);
   private subscription?: Subscription;
 
   readonly data = signal<PagedResult<CommentDto> | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+
+  readonly hasNew = signal(false);
 
   readonly page = signal(1);
   readonly sortBy = signal<SortField>('date');
@@ -36,10 +40,24 @@ export class CommentsListComponent implements OnInit, OnDestroy {
     this.load();
 
     this.api.changed$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
+
+    this.realtime.commentCreated$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(notice => {
+      if (!this.api.isOwn(notice.commentId)) this.hasNew.set(true);
+    });
+
+    this.realtime.resync$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.hasNew.set(true));
+
+    this.realtime.start();
   }
 
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
+  }
+
+  refresh(): void {
+    this.load();
   }
 
   sort(field: SortField): void {
@@ -74,6 +92,7 @@ export class CommentsListComponent implements OnInit, OnDestroy {
     this.subscription?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
+    this.hasNew.set(false);
 
     this.subscription = this.api
       .getPage({ page: this.page(), sortBy: this.sortBy(), desc: this.desc() })

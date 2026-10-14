@@ -1,6 +1,13 @@
 <section class="comments">
   <h2>Комментарии</h2>
 
+  @if (hasNew()) {
+  <div class="new-comments" role="status">
+    Появились новые комментарии.
+    <button type="button" (click)="refresh()">Обновить</button>
+  </div>
+  }
+
   @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
   }

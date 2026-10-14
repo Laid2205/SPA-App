@@ -49,3 +49,9 @@ export interface CreateCommentPayload {
   captchaAnswer: string;
   file: File | null;
 }
+
+export interface CommentCreatedNotice {
+  commentId: number;
+  parentId: number | null;
+  createdAt: string;
+}

@@ -15,6 +15,12 @@ export class CommentsApiService {
 
   readonly changed$ = new Subject<void>();
 
+  private readonly ownCommentIds = new Set<number>();
+
+  isOwn(commentId: number): boolean {
+    return this.ownCommentIds.has(commentId);
+  }
+
   getPage(query: CommentQuery): Observable<PagedResult<CommentDto>> {
     const params = new HttpParams()
       .set('page', query.page)
@@ -43,8 +49,11 @@ export class CommentsApiService {
     body.append('captchaAnswer', payload.captchaAnswer);
     if (payload.file) body.append('file', payload.file);
 
-    return this.http
-      .post<CommentDto>('/api/comments', body)
-      .pipe(tap(() => this.changed$.next()));
+    return this.http.post<CommentDto>('/api/comments', body).pipe(
+      tap(created => {
+        this.ownCommentIds.add(created.id);
+        this.changed$.next();
+      })
+    );
   }
 }

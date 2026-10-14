@@ -14,7 +14,7 @@ public class AttachmentService : IAttachmentService
     public const long MaxImageBytes = 5 * 1024 * 1024;
     public const int MaxWidth = 320;
     public const int MaxHeight = 240;
-    private const long MaxPixels = 25_000_000; // защита от «картинок-бомб»
+    private const long MaxPixels = 25_000_000;
 
     private readonly AppDbContext _db;
     private readonly string _root;
@@ -58,7 +58,6 @@ public class AttachmentService : IAttachmentService
             input.Position = 0;
             using var image = await Image.LoadAsync(input, ct);
 
-            // Формат берём из содержимого, а не из расширения
             var format = image.Metadata.DecodedImageFormat;
             var ext = format?.Name switch
             {
@@ -75,7 +74,7 @@ public class AttachmentService : IAttachmentService
                 image.Mutate(x => x.Resize(new ResizeOptions
                 {
                     Size = new Size(MaxWidth, MaxHeight),
-                    Mode = ResizeMode.Max // сохраняет пропорции, вписывает в 320x240
+                    Mode = ResizeMode.Max
                 }));
             }
 
@@ -112,7 +111,7 @@ public class AttachmentService : IAttachmentService
 
         try
         {
-            new UTF8Encoding(false, true).GetString(bytes); // строгая проверка UTF-8
+            new UTF8Encoding(false, true).GetString(bytes);
         }
         catch (DecoderFallbackException)
         {
