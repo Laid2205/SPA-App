@@ -481,3 +481,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 uploads/
+
+# Built Angular app copied into the API for hosting, and local production secrets
+backend/src/CommentsApp.Api/wwwroot/
+**/appsettings.Production.json

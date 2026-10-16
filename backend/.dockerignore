@@ -1,0 +1,7 @@
+**/bin/
+**/obj/
+**/uploads/
+**/.vs/
+tests/
+**/wwwroot/
+**/appsettings.Production.json
