@@ -109,6 +109,5 @@ app.MapControllers();
 
 app.MapHub<CommentsHub>("/hubs/comments");
 
-app.MapFallbackToFile("{*path:regex(^(?!api/|hubs/).*$)}", "index.html");
-
+app.MapFallbackToFile("{*path:regex(^(?!api/|hubs/)[^.]*$)}", "index.html");
 app.Run();
